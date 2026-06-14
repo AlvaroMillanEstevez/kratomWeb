@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, type Component } from 'vue'
+import { nextTick, onMounted, onUnmounted, reactive, ref, type Component } from 'vue'
 import {
   ArrowRight,
   Boxes,
   Check,
+  CircleCheckBig,
   ClipboardCheck,
   FileCheck,
   FlaskConical,
@@ -15,30 +16,43 @@ import {
   PackageCheck,
   Phone,
   Play,
+  RadioTower,
+  Route,
   Scale,
   Send,
   ShieldCheck,
   Sprout,
   Truck,
+  UsersRound,
   X,
 } from '@lucide/vue'
 
 type IconComponent = Component
 
-const contactEmail = 'sales@itbbotanical.com'
+const brandName = 'ART Botanical IND'
+const contactEmail = 'sales@artbotanicalind.com'
 const whatsappNumber = '6285890201952'
 
+const publicAsset = (filename: string) => `${import.meta.env.BASE_URL}${filename}`
+
 const images = {
-  logoWide: '/ChatGPT Image 8 jun 2026, 11_23_39 (4).png',
-  logoMark: '/ChatGPT Image 8 jun 2026, 11_23_38 (1).png',
-  productGreen: '/IMG-20260607-WA0007.jpg',
-  productRed: '/IMG-20260607-WA0004.jpg',
-  samplePacks: '/IMG-20260607-WA0008.jpg',
-  labGreen: '/IMG-20260607-WA0005.jpg',
-  boxedShipment: '/IMG-20260607-WA0009.jpg',
-  cartonCloseup: '/IMG-20260607-WA0010.jpg',
-  bestSellers: '/IMG-20260607-WA0002.jpg',
-  effectsGuide: '/IMG-20260607-WA0011.jpg',
+  logoWide: publicAsset('ARTfullLogohorizontal.png'),
+  logoMark: publicAsset('ARTbotanicalLogo.png'),
+  productGreen: publicAsset('IMG-20260607-WA0007.jpg'),
+  productRed: publicAsset('IMG-20260607-WA0004.jpg'),
+  productWhite: publicAsset('IMG-20260607-WA0008.jpg'),
+  productExtract: publicAsset('WhatsApp Image 2026-06-14 at 10.34.33.jpeg'),
+  samplePacks: publicAsset('WhatsApp Image 2026-06-14 at 10.34.32.jpeg'),
+  labGreen: publicAsset('IMG-20260607-WA0005.jpg'),
+  boxedShipment: publicAsset('IMG-20260607-WA0009.jpg'),
+  cartonCloseup: publicAsset('IMG-20260607-WA0010.jpg'),
+  bestSellers: publicAsset('IMG-20260607-WA0002.jpg'),
+  effectsGuide: publicAsset('IMG-20260607-WA0011.jpg'),
+  farmVideo: publicAsset('WhatsApp Video 2026-06-14 at 10.34.33.mp4'),
+  farmPoster: publicAsset('farm-garden-poster.jpg'),
+  deliveryOne: publicAsset('shippmentProof (1).png'),
+  deliveryTwo: publicAsset('shippmentProof (2).png'),
+  deliveryThree: publicAsset('shippmentProof (3).png'),
 }
 
 const navItems = [
@@ -51,10 +65,13 @@ const navItems = [
 ]
 
 const socialLinks = [
-  { name: 'Instagram', network: 'instagram', href: 'https://instagram.com/itbbotanical' },
-  { name: 'Facebook', network: 'facebook', href: 'https://facebook.com/itbbotanical' },
-  { name: 'X', network: 'x', href: 'https://x.com/itbbotanical' },
-  { name: 'TikTok', network: 'tiktok', href: 'https://tiktok.com/@itbbotanical' },
+  { name: 'Instagram', network: 'instagram', href: 'https://instagram.com/artbotanicalind' },
+  { name: 'Facebook', network: 'facebook', href: 'https://facebook.com/artbotanicalind' },
+  {
+    name: 'LinkedIn',
+    network: 'linkedin',
+    href: 'https://linkedin.com/company/artbotanicalind',
+  },
 ]
 
 const trustItems: Array<{ icon: IconComponent; value: string; label: string }> = [
@@ -66,7 +83,9 @@ const trustItems: Array<{ icon: IconComponent; value: string; label: string }> =
 
 const products = [
   {
+    id: 'green-vein',
     name: 'Green Vein Kratom',
+    inquiryValue: 'Green vein powder',
     badge: 'Balanced profile',
     image: images.productGreen,
     color: '#2f7d45',
@@ -76,7 +95,9 @@ const products = [
     varieties: ['Green Maeng Da', 'Green Sumatra', 'Green Borneo', 'Green Bali'],
   },
   {
+    id: 'red-vein',
     name: 'Red Vein Kratom',
+    inquiryValue: 'Red vein powder',
     badge: 'Mature leaf profile',
     image: images.productRed,
     color: '#8f3b2f',
@@ -86,14 +107,33 @@ const products = [
     varieties: ['Red Maeng Da', 'Red Sumatra', 'Red Borneo', 'Red Bali'],
   },
   {
+    id: 'white-vein',
     name: 'White Vein Kratom',
+    inquiryValue: 'White vein powder',
     badge: 'Active catalogue profile',
-    image: images.samplePacks,
-    color: '#a7a682',
+    image: images.productWhite,
+    color: '#81783f',
     description:
       'A lighter powder profile for buyers building a complete green, red and white assortment. Sample formats can be arranged before bulk allocation.',
     specs: ['Fine powder format', 'White COA incoming', 'Sample packs available', 'Export carton packing'],
     varieties: ['White Maeng Da', 'White Sumatra', 'White Borneo', 'White Bali'],
+  },
+  {
+    id: 'extract-powder',
+    name: 'Extract Powder',
+    inquiryValue: 'Extract powder',
+    badge: 'Special extraction',
+    image: images.productExtract,
+    color: '#7b6335',
+    description:
+      'Concentrated kratom formats for specialist catalogues. Extract powder can look similar to standard leaf powder, so concentration must be defined by ratio, process and batch documentation rather than appearance alone.',
+    specs: [
+      'Extract powder: concentrated powder such as 10:1, 20:1 or 50:1',
+      'Resin or paste: darker, dense and resinous texture',
+      'Liquid extract or tincture: concentrated liquid format',
+      'Enhanced kratom: leaf powder blended with extract',
+    ],
+    varieties: ['Extract powder', 'Resin / paste', 'Liquid extract', 'Enhanced kratom'],
   },
 ]
 
@@ -134,6 +174,14 @@ const qualityCards = [
     image: '',
     detail: 'Reserved report slot for the white vein batch analysis. The layout is ready for the next laboratory sheet.',
   },
+  {
+    title: 'Extract powder COA',
+    status: 'Incoming',
+    icon: FlaskConical,
+    image: '',
+    detail:
+      'Reserved report slot for the extract powder analysis, including concentration ratio and batch-specific verification when available.',
+  },
 ]
 
 const qualityChecks = [
@@ -166,6 +214,27 @@ const exportSteps: Array<{ icon: IconComponent; title: string; body: string }> =
   },
 ]
 
+const deliveryProofs = [
+  {
+    image: images.deliveryOne,
+    date: 'May 8, 2026',
+    destination: 'United States',
+    carrier: 'UPS',
+  },
+  {
+    image: images.deliveryTwo,
+    date: 'May 11, 2026',
+    destination: 'United States',
+    carrier: 'UPS',
+  },
+  {
+    image: images.deliveryThree,
+    date: 'May 11, 2026',
+    destination: 'United States',
+    carrier: 'UPS',
+  },
+]
+
 const educationProfiles = [
   {
     title: 'Green vein',
@@ -193,14 +262,45 @@ const form = reactive({
 
 const isMenuOpen = ref(false)
 const formSent = ref(false)
+const expandedProductId = ref<string | null>(null)
 
 function scrollToSection(id: string) {
   isMenuOpen.value = false
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+function openProductDetails(productId: string) {
+  expandedProductId.value = productId
+  nextTick(() => {
+    document
+      .querySelector<HTMLButtonElement>(`#product-details-${productId} .product-card__close`)
+      ?.focus()
+  })
+}
+
+function closeProductDetails(productId: string) {
+  expandedProductId.value = null
+  nextTick(() => {
+    document
+      .querySelector<HTMLButtonElement>(`#product-${productId} .product-card__details-trigger`)
+      ?.focus()
+  })
+}
+
+function requestProduct(product: (typeof products)[number]) {
+  form.product = product.inquiryValue
+  expandedProductId.value = null
+  scrollToSection('contact')
+}
+
+function handleEscape(event: KeyboardEvent) {
+  if (event.key === 'Escape' && expandedProductId.value) {
+    closeProductDetails(expandedProductId.value)
+  }
+}
+
 function handleSubmit() {
-  const subject = `ITB Botanical inquiry from ${form.company || form.name || 'new buyer'}`
+  const subject = `${brandName} inquiry from ${form.company || form.name || 'new buyer'}`
   const body = [
     `Name: ${form.name}`,
     `Company: ${form.company}`,
@@ -217,6 +317,8 @@ function handleSubmit() {
 }
 
 onMounted(() => {
+  window.addEventListener('keydown', handleEscape)
+
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -231,6 +333,10 @@ onMounted(() => {
 
   document.querySelectorAll('.reveal').forEach((element) => observer.observe(element))
 })
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscape)
+})
 </script>
 
 <template>
@@ -240,8 +346,12 @@ onMounted(() => {
       <div class="hero__shade"></div>
 
       <nav class="nav" aria-label="Primary navigation">
-        <a class="nav__brand" href="#top" aria-label="ITB Botanical home">
-          <img :src="images.logoWide" alt="ITB Botanical" />
+        <a class="nav__brand" href="#top" :aria-label="`${brandName} home`">
+          <img :src="images.logoMark" alt="" />
+          <span>
+            <strong>A.R.T.</strong>
+            <small>Botanical IND</small>
+          </span>
         </a>
 
         <div class="nav__links" :class="{ 'nav__links--open': isMenuOpen }">
@@ -282,7 +392,7 @@ onMounted(() => {
           </p>
           <h1>Indonesian kratom export, verified from leaf to shipment.</h1>
           <p class="hero__lead">
-            ITB Botanical connects certified local supply in Indonesia with buyers in legal
+            ART Botanical IND connects certified local supply in Indonesia with buyers in legal
             receiving markets, combining real product batches, lab documentation and export-ready
             packing.
           </p>
@@ -356,6 +466,7 @@ onMounted(() => {
 
           <div class="documentary reveal">
             <div class="documentary__video" aria-label="Documentary video placeholder">
+              <img :src="images.boxedShipment" alt="" loading="lazy" />
               <Play :size="48" aria-hidden="true" />
               <span>Documentary video coming soon</span>
             </div>
@@ -368,6 +479,43 @@ onMounted(() => {
             </div>
           </div>
         </div>
+
+        <div class="local-suppliers reveal">
+          <div class="local-suppliers__copy">
+            <p class="eyebrow">
+              <UsersRound :size="18" aria-hidden="true" />
+              Our local suppliers
+            </p>
+            <h3>Direct relationships with growers and production gardens.</h3>
+            <p>
+              This first field video offers a short look at one of the gardens connected to our
+              supplier network. Future updates will document leaf harvesting, drying, milling,
+              storage and batch preparation directly from the people handling the product.
+            </p>
+            <div class="supplier-points">
+              <span><Sprout :size="17" aria-hidden="true" /> Garden-level sourcing</span>
+              <span><Route :size="17" aria-hidden="true" /> Shorter supply chain</span>
+              <span><ShieldCheck :size="17" aria-hidden="true" /> Traceable partners</span>
+            </div>
+          </div>
+
+          <div class="farm-video">
+            <video
+              :src="images.farmVideo"
+              :poster="images.farmPoster"
+              controls
+              playsinline
+              preload="metadata"
+              aria-label="Video from a local supplier production garden"
+            >
+              Your browser does not support HTML video.
+            </video>
+            <div class="farm-video__label">
+              <Sprout :size="18" aria-hidden="true" />
+              Production garden, Indonesia
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="products" class="section section--products">
@@ -377,41 +525,107 @@ onMounted(() => {
               <Leaf :size="18" aria-hidden="true" />
               Product specifications
             </p>
-            <h2>Green, red and white vein lines for export catalogues.</h2>
+            <h2>Vein lines and specialty extracts for export catalogues.</h2>
             <p>
-              Each profile is presented with real batch visuals, clear documentation status and a
-              direct path to request pricing, samples or bulk allocation.
+              Green, red and white vein profiles are joined by concentrated extract formats, each
+              presented with real product visuals and a direct path to request specifications,
+              pricing or bulk allocation.
             </p>
           </div>
 
           <div class="product-grid">
             <article
               v-for="product in products"
+              :id="`product-${product.id}`"
               :key="product.name"
               class="product-card reveal"
+              :class="{ 'product-card--details': expandedProductId === product.id }"
               :style="{ '--product-color': product.color }"
             >
-              <div class="product-card__image">
-                <img :src="product.image" :alt="product.name" loading="lazy" />
-                <span>{{ product.badge }}</span>
-              </div>
-              <div class="product-card__body">
-                <h3>{{ product.name }}</h3>
-                <p>{{ product.description }}</p>
-                <ul class="check-list">
-                  <li v-for="spec in product.specs" :key="spec">
-                    <Check :size="16" aria-hidden="true" />
-                    {{ spec }}
-                  </li>
-                </ul>
-                <div class="variety-list">
-                  <span v-for="variety in product.varieties" :key="variety">{{ variety }}</span>
+              <div
+                class="product-card__summary"
+                :aria-hidden="expandedProductId === product.id"
+                :inert="expandedProductId === product.id"
+              >
+                <div class="product-card__image">
+                  <img :src="product.image" :alt="product.name" loading="lazy" />
+                  <span>{{ product.badge }}</span>
                 </div>
-                <button class="text-action" type="button" @click="scrollToSection('contact')">
-                  Contact us for {{ product.name.toLowerCase() }}
-                  <ArrowRight :size="16" aria-hidden="true" />
-                </button>
+                <div class="product-card__body">
+                  <h3>{{ product.name }}</h3>
+                  <p class="product-card__format-label">Available formats</p>
+                  <div class="variety-list">
+                    <span v-for="variety in product.varieties" :key="variety">{{ variety }}</span>
+                  </div>
+                  <div class="product-card__actions">
+                    <button
+                      class="product-card__details-trigger"
+                      type="button"
+                      :aria-expanded="expandedProductId === product.id"
+                      :aria-controls="`product-details-${product.id}`"
+                      @click="openProductDetails(product.id)"
+                    >
+                      View specifications
+                      <ArrowRight :size="17" aria-hidden="true" />
+                    </button>
+                    <button class="text-action" type="button" @click="requestProduct(product)">
+                      Request a quote
+                      <Send :size="16" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
               </div>
+
+              <Transition name="product-panel">
+                <section
+                  v-if="expandedProductId === product.id"
+                  :id="`product-details-${product.id}`"
+                  class="product-card__details"
+                  role="region"
+                  :aria-label="`${product.name} specifications`"
+                >
+                  <button
+                    class="product-card__close"
+                    type="button"
+                    :aria-label="`Back to ${product.name}`"
+                    :title="`Back to ${product.name}`"
+                    @click="closeProductDetails(product.id)"
+                  >
+                    <X :size="20" aria-hidden="true" />
+                  </button>
+
+                  <p class="product-card__eyebrow">{{ product.badge }}</p>
+                  <h3>{{ product.name }}</h3>
+                  <p class="product-card__description">{{ product.description }}</p>
+
+                  <strong class="product-card__spec-title">Product specifications</strong>
+                  <ul class="check-list product-card__spec-list">
+                    <li v-for="spec in product.specs" :key="spec">
+                      <Check :size="16" aria-hidden="true" />
+                      {{ spec }}
+                    </li>
+                  </ul>
+
+                  <div class="product-card__details-actions">
+                    <button
+                      class="product-card__back"
+                      type="button"
+                      @click="closeProductDetails(product.id)"
+                    >
+                      <X :size="16" aria-hidden="true" />
+                      Back to product
+                    </button>
+                    <button
+                      class="product-card__quote"
+                      type="button"
+                      @click="requestProduct(product)"
+                    >
+                      Request quote
+                      <ArrowRight :size="16" aria-hidden="true" />
+                    </button>
+                  </div>
+                </section>
+              </Transition>
             </article>
           </div>
 
@@ -444,10 +658,11 @@ onMounted(() => {
               <ShieldCheck :size="18" aria-hidden="true" />
               Quality verification
             </p>
-            <h2>Laboratory evidence and prepared COA slots for every vein line.</h2>
+            <h2>Laboratory evidence and prepared COA slots across the catalogue.</h2>
             <p>
-              The green powder analysis is visible today. Red and white report positions are ready
-              so the same verification structure can be filled as soon as the documents arrive.
+              The green powder analysis is visible today. Red, white and extract powder report
+              positions are ready so the same verification structure can be completed as soon as
+              each document arrives.
             </p>
           </div>
 
@@ -499,9 +714,22 @@ onMounted(() => {
           </div>
 
           <div class="shipment-gallery reveal">
-            <img :src="images.boxedShipment" alt="Prepared kratom export cartons" loading="lazy" />
-            <img :src="images.cartonCloseup" alt="Sealed carton example" loading="lazy" />
-            <img :src="images.samplePacks" alt="Kratom sample packs" loading="lazy" />
+            <figure>
+              <img
+                :src="images.samplePacks"
+                alt="Labelled kratom varieties prepared for packing"
+                loading="lazy"
+              />
+              <figcaption>Selected varieties</figcaption>
+            </figure>
+            <figure>
+              <img :src="images.boxedShipment" alt="Prepared kratom export cartons" loading="lazy" />
+              <figcaption>Bulk cartons</figcaption>
+            </figure>
+            <figure>
+              <img :src="images.cartonCloseup" alt="Sealed carton example" loading="lazy" />
+              <figcaption>Sealed shipment</figcaption>
+            </figure>
           </div>
         </div>
 
@@ -511,6 +739,38 @@ onMounted(() => {
             <h3>{{ step.title }}</h3>
             <p>{{ step.body }}</p>
           </article>
+        </div>
+
+        <div class="section-shell delivery-tracking">
+          <div class="delivery-tracking__heading reveal">
+            <div>
+              <p class="eyebrow">
+                <RadioTower :size="18" aria-hidden="true" />
+                Real-time shipment tracking
+              </p>
+              <h2>From dispatch updates to successful delivery.</h2>
+            </div>
+            <p>
+              Buyers receive carrier references for live shipment monitoring. These recent tracking
+              records show three independently delivered consignments, with private tracking data
+              concealed.
+            </p>
+          </div>
+
+          <div class="delivery-grid">
+            <article v-for="proof in deliveryProofs" :key="`${proof.date}-${proof.image}`" class="delivery-card reveal">
+              <div class="delivery-card__image">
+                <img :src="proof.image" alt="Successful shipment delivery tracking confirmation" loading="lazy" />
+              </div>
+              <div class="delivery-card__body">
+                <CircleCheckBig :size="22" aria-hidden="true" />
+                <div>
+                  <strong>Delivered successfully</strong>
+                  <span>{{ proof.carrier }} · {{ proof.destination }} · {{ proof.date }}</span>
+                </div>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
 
@@ -557,7 +817,7 @@ onMounted(() => {
           <div class="section-copy reveal">
             <p class="eyebrow">
               <Mail :size="18" aria-hidden="true" />
-              Contact ITB Botanical
+              Contact ART Botanical IND
             </p>
             <h2>Tell us your destination, vein profile and target quantity.</h2>
             <p>
@@ -605,6 +865,10 @@ onMounted(() => {
                   <option>Green vein powder</option>
                   <option>Red vein powder</option>
                   <option>White vein powder</option>
+                  <option>Extract powder</option>
+                  <option>Resin / paste</option>
+                  <option>Liquid extract / tincture</option>
+                  <option>Enhanced kratom</option>
                   <option>Mixed sample set</option>
                   <option>Private label bulk order</option>
                 </select>
@@ -639,7 +903,7 @@ onMounted(() => {
     <footer class="footer">
       <div class="section-shell footer__inner">
         <div>
-          <img class="footer__logo" :src="images.logoWide" alt="ITB Botanical" />
+          <img class="footer__logo" :src="images.logoWide" :alt="brandName" />
           <p>
             Indonesian kratom sourcing for legal receiving markets, with batch documentation,
             export packing and buyer-side compliance review.
@@ -674,7 +938,7 @@ onMounted(() => {
         </div>
       </div>
       <div class="section-shell footer__bottom">
-        <span>© 2026 ITB Botanical. All rights reserved.</span>
+        <span>© 2026 ART Botanical IND. All rights reserved.</span>
         <span>For lawful importers and verified buyers only.</span>
       </div>
     </footer>
@@ -716,6 +980,11 @@ onMounted(() => {
 }
 
 .site {
+  --brand-olive: #59653b;
+  --brand-olive-dark: #273020;
+  --brand-gold: #b68a2a;
+  --brand-gold-light: #d8bc70;
+  --brand-soft: #f2f1e9;
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -773,7 +1042,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   margin: 0 0 16px;
-  color: #3c7e43;
+  color: var(--brand-olive);
   font-size: 0.82rem;
   font-weight: 800;
   line-height: 1.2;
@@ -782,7 +1051,7 @@ onMounted(() => {
 
 .section--quality .eyebrow,
 .hero .eyebrow {
-  color: #a7df76;
+  color: var(--brand-gold-light);
 }
 
 h1,
@@ -854,13 +1123,13 @@ p {
 }
 
 .button--primary {
-  background: #62b63f;
-  color: #0d1b11;
+  background: var(--brand-gold);
+  color: #17180f;
   box-shadow: 0 14px 32px rgba(35, 81, 34, 0.24);
 }
 
 .button--primary:hover {
-  background: #76ca50;
+  background: #cda846;
 }
 
 .button--ghost {
@@ -928,15 +1197,38 @@ p {
 
 .nav__brand {
   display: inline-flex;
+  gap: 10px;
   align-items: center;
-  min-width: 182px;
+  min-width: 220px;
 }
 
 .nav__brand img {
   display: block;
-  width: 178px;
-  max-width: 100%;
-  height: auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.nav__brand span,
+.nav__brand strong,
+.nav__brand small {
+  display: block;
+}
+
+.nav__brand strong {
+  color: #374027;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.08rem;
+  line-height: 1;
+}
+
+.nav__brand small {
+  margin-top: 4px;
+  color: #8b6c28;
+  font-size: 0.67rem;
+  font-weight: 850;
+  text-transform: uppercase;
 }
 
 .nav__links {
@@ -1053,7 +1345,7 @@ p {
 
 .proof-item svg {
   flex: 0 0 auto;
-  color: #a7df76;
+  color: var(--brand-gold-light);
 }
 
 .proof-item strong,
@@ -1100,14 +1392,14 @@ p {
 }
 
 .social-row--footer .social-button {
-  border-color: rgba(98, 182, 63, 0.28);
-  background: #edf4e9;
+  border-color: rgba(182, 138, 42, 0.32);
+  background: #f4f1e8;
   color: #17221a;
 }
 
 .social-button:hover {
-  border-color: rgba(167, 223, 118, 0.85);
-  background: rgba(167, 223, 118, 0.18);
+  border-color: rgba(216, 188, 112, 0.9);
+  background: rgba(216, 188, 112, 0.18);
   transform: translateY(-2px);
 }
 
@@ -1145,59 +1437,33 @@ p {
   content: "";
 }
 
-.social-button__icon--facebook::before {
+.social-button__icon--facebook::before,
+.social-button__icon--linkedin::before {
   position: absolute;
-  top: -2px;
-  left: 6px;
   color: currentColor;
-  content: "f";
   font-family: Arial, sans-serif;
-  font-size: 25px;
   font-weight: 900;
   line-height: 1;
 }
 
-.social-button__icon--x::before,
-.social-button__icon--x::after {
-  position: absolute;
-  top: 2px;
-  left: 9px;
-  width: 2px;
-  height: 18px;
-  border-radius: 2px;
-  background: currentColor;
-  content: "";
+.social-button__icon--facebook::before {
+  top: -2px;
+  left: 6px;
+  content: "f";
+  font-size: 25px;
 }
 
-.social-button__icon--x::before {
-  transform: rotate(45deg);
+.social-button__icon--linkedin {
+  border: 2px solid currentColor;
+  border-radius: 3px;
 }
 
-.social-button__icon--x::after {
-  transform: rotate(-45deg);
-}
-
-.social-button__icon--tiktok::before {
-  position: absolute;
-  top: 0;
-  left: 7px;
-  width: 7px;
-  height: 14px;
-  border-right: 3px solid currentColor;
-  border-bottom: 3px solid currentColor;
-  border-radius: 0 0 7px 0;
-  content: "";
-}
-
-.social-button__icon--tiktok::after {
-  position: absolute;
-  right: 3px;
-  bottom: 0;
-  width: 9px;
-  height: 9px;
-  border: 3px solid currentColor;
-  border-radius: 50%;
-  content: "";
+.social-button__icon--linkedin::before {
+  top: 3px;
+  left: 2px;
+  content: "in";
+  font-size: 13px;
+  letter-spacing: -1px;
 }
 
 .section-heading {
@@ -1241,22 +1507,29 @@ p {
   min-height: 340px;
   place-items: center;
   overflow: hidden;
+  background: #17221a;
   color: #ffffff;
 }
 
-.documentary__video::before {
+.documentary__video::after {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(135deg, rgba(20, 37, 29, 0.9), rgba(40, 86, 52, 0.62)),
-    url('/IMG-20260607-WA0009.jpg') center/cover;
+  background: linear-gradient(135deg, rgba(20, 37, 29, 0.9), rgba(40, 86, 52, 0.62));
   content: "";
+}
+
+.documentary__video img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .documentary__video svg,
 .documentary__video span {
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 .documentary__video span {
@@ -1295,13 +1568,102 @@ p {
   font-size: 0.9rem;
 }
 
+.local-suppliers {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(420px, 1.15fr);
+  margin-top: 64px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--brand-olive-dark);
+  box-shadow: 0 24px 70px rgba(28, 49, 34, 0.16);
+}
+
+.local-suppliers__copy {
+  align-self: center;
+  padding: 42px;
+}
+
+.local-suppliers__copy .eyebrow {
+  color: var(--brand-gold-light);
+}
+
+.local-suppliers__copy h3 {
+  color: #ffffff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2rem;
+}
+
+.local-suppliers__copy p {
+  color: #d9e0d3;
+}
+
+.supplier-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.supplier-points span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(216, 188, 112, 0.3);
+  border-radius: 8px;
+  padding: 9px 11px;
+  background: rgba(216, 188, 112, 0.08);
+  color: #f1ead5;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.supplier-points svg {
+  color: var(--brand-gold-light);
+}
+
+.farm-video {
+  position: relative;
+  min-height: 390px;
+  background: #0f140d;
+}
+
+.farm-video video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 390px;
+  object-fit: cover;
+}
+
+.farm-video__label {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(18, 26, 16, 0.82);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 850;
+  backdrop-filter: blur(10px);
+}
+
+.farm-video__label svg {
+  color: var(--brand-gold-light);
+}
+
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
 }
 
 .product-card {
+  position: relative;
+  height: 580px;
   overflow: hidden;
   border: 1px solid #dfe9da;
   border-radius: 8px;
@@ -1317,9 +1679,20 @@ p {
   transform: translateY(-4px);
 }
 
+.product-card--details:hover {
+  transform: none;
+}
+
+.product-card__summary {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
 .product-card__image {
   position: relative;
-  aspect-ratio: 4 / 3;
+  flex: 0 0 auto;
+  height: 220px;
   overflow: hidden;
   background: #dce8d4;
 }
@@ -1348,11 +1721,25 @@ p {
 }
 
 .product-card__body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
   padding: 24px;
 }
 
-.product-card__body p {
-  margin-bottom: 18px;
+.product-card__body h3 {
+  margin-bottom: 8px;
+}
+
+.product-card__format-label {
+  margin: 0;
+  color: #738078;
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  text-transform: uppercase;
 }
 
 .check-list {
@@ -1375,14 +1762,21 @@ p {
 .check-list svg {
   flex: 0 0 auto;
   margin-top: 2px;
-  color: #4e9846;
+  color: var(--brand-olive);
 }
 
 .variety-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 20px 0;
+  align-content: flex-start;
+  margin: 16px 0 22px;
+}
+
+.product-card__actions {
+  display: grid;
+  gap: 13px;
+  margin-top: auto;
 }
 
 .variety-list span {
@@ -1405,6 +1799,160 @@ p {
   font-weight: 900;
   line-height: 1.35;
   padding: 0;
+}
+
+.product-card__actions .text-action {
+  justify-content: center;
+  min-height: 30px;
+}
+
+.product-card__details-trigger,
+.product-card__quote,
+.product-card__back {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-weight: 850;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.product-card__details-trigger {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--product-color), #ffffff 55%);
+  background: color-mix(in srgb, var(--product-color), #ffffff 90%);
+  color: var(--product-color);
+}
+
+.product-card__details-trigger:hover,
+.product-card__back:hover {
+  border-color: var(--product-color);
+  background: color-mix(in srgb, var(--product-color), #ffffff 84%);
+}
+
+.product-card__details {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: flex;
+  overflow-y: auto;
+  flex-direction: column;
+  border-top: 4px solid var(--product-color);
+  padding: 28px 24px 24px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--product-color), #ffffff 94%), #ffffff 42%);
+  scrollbar-color: color-mix(in srgb, var(--product-color), #ffffff 50%) transparent;
+  scrollbar-width: thin;
+}
+
+.product-card__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d8e2d4;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #27352b;
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.product-card__close:hover {
+  background: #ffffff;
+  transform: rotate(4deg);
+}
+
+.product-card__eyebrow {
+  margin: 2px 48px 12px 0;
+  color: var(--product-color);
+  font-size: 0.76rem;
+  font-weight: 900;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.product-card__details h3 {
+  margin-bottom: 12px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.65rem;
+  line-height: 1.08;
+}
+
+.product-card__description {
+  margin: 0 0 20px;
+  color: #435148;
+  font-size: 0.92rem;
+  line-height: 1.62;
+}
+
+.product-card__spec-title {
+  display: block;
+  margin-bottom: 12px;
+  color: #1b2a20;
+  font-size: 0.84rem;
+  text-transform: uppercase;
+}
+
+.product-card__spec-list {
+  gap: 9px;
+}
+
+.product-card__spec-list li {
+  font-size: 0.88rem;
+}
+
+.product-card__spec-list svg {
+  color: var(--product-color);
+}
+
+.product-card__details-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.product-card__back {
+  border: 1px solid #d4ded0;
+  background: #ffffff;
+  color: #37463b;
+}
+
+.product-card__quote {
+  border: 1px solid var(--product-color);
+  background: var(--product-color);
+  color: #ffffff;
+}
+
+.product-card__quote:hover {
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--product-color), transparent 74%);
+  transform: translateY(-1px);
+}
+
+.product-panel-enter-active,
+.product-panel-leave-active {
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+
+.product-panel-enter-from,
+.product-panel-leave-to {
+  opacity: 0;
+  transform: translateY(14px);
 }
 
 .best-sellers {
@@ -1463,7 +2011,7 @@ p {
 
 .quality-grid {
   display: grid;
-  grid-template-columns: 1.35fr 1fr 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -1476,7 +2024,7 @@ p {
 
 .quality-card__image,
 .quality-card__placeholder {
-  height: 430px;
+  height: 380px;
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -1494,7 +2042,7 @@ p {
 .quality-card__placeholder {
   display: grid;
   place-items: center;
-  color: #a7df76;
+  color: var(--brand-gold-light);
 }
 
 .quality-card__placeholder span {
@@ -1514,11 +2062,11 @@ p {
 .status-pill {
   display: inline-flex;
   margin-bottom: 14px;
-  border: 1px solid rgba(167, 223, 118, 0.45);
+  border: 1px solid rgba(216, 188, 112, 0.45);
   border-radius: 8px;
   padding: 6px 9px;
-  background: rgba(167, 223, 118, 0.1);
-  color: #c8f29e;
+  background: rgba(216, 188, 112, 0.1);
+  color: #ead391;
   font-size: 0.78rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -1550,15 +2098,44 @@ p {
   gap: 12px;
 }
 
+.shipment-gallery figure {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e6eadf;
+}
+
 .shipment-gallery img {
   width: 100%;
   height: 100%;
-  border-radius: 8px;
   object-fit: cover;
+  transition: transform 320ms ease;
 }
 
-.shipment-gallery img:first-child {
+.shipment-gallery figure:hover img {
+  transform: scale(1.035);
+}
+
+.shipment-gallery figure:first-child {
   grid-row: span 2;
+}
+
+.shipment-gallery figure:first-child img {
+  object-position: center;
+}
+
+.shipment-gallery figcaption {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(18, 26, 16, 0.82);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 850;
+  backdrop-filter: blur(8px);
 }
 
 .export-steps {
@@ -1578,12 +2155,91 @@ p {
 
 .export-step svg {
   margin-bottom: 18px;
-  color: #3c7e43;
+  color: var(--brand-olive);
 }
 
 .export-step p {
   margin-bottom: 0;
   font-size: 0.94rem;
+}
+
+.delivery-tracking {
+  margin-top: 72px;
+  border-top: 1px solid #dfe7d9;
+  padding-top: 72px;
+}
+
+.delivery-tracking__heading {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(360px, 0.7fr);
+  gap: 48px;
+  align-items: end;
+  margin-bottom: 34px;
+}
+
+.delivery-tracking__heading h2,
+.delivery-tracking__heading p {
+  margin-bottom: 0;
+}
+
+.delivery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.delivery-card {
+  overflow: hidden;
+  border: 1px solid #dfe7d9;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 18px 50px rgba(22, 47, 29, 0.07);
+}
+
+.delivery-card__image {
+  height: 470px;
+  overflow: hidden;
+  background: #f4f5f0;
+}
+
+.delivery-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform 320ms ease;
+}
+
+.delivery-card:hover .delivery-card__image img {
+  transform: scale(1.025);
+}
+
+.delivery-card__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px;
+}
+
+.delivery-card__body svg {
+  flex: 0 0 auto;
+  color: var(--brand-olive);
+}
+
+.delivery-card__body strong,
+.delivery-card__body span {
+  display: block;
+}
+
+.delivery-card__body strong {
+  color: #17221a;
+}
+
+.delivery-card__body span {
+  margin-top: 4px;
+  color: #647067;
+  font-size: 0.84rem;
+  line-height: 1.4;
 }
 
 .education-grid {
@@ -1637,7 +2293,7 @@ p {
 }
 
 .profile-list article {
-  border-left: 4px solid #62b63f;
+  border-left: 4px solid var(--brand-gold);
   border-radius: 8px;
   padding: 18px 20px;
   background: #ffffff;
@@ -1666,7 +2322,7 @@ p {
 .compliance-note svg {
   flex: 0 0 auto;
   margin-top: 2px;
-  color: #3c7e43;
+  color: var(--brand-olive);
 }
 
 .contact-grid {
@@ -1693,7 +2349,7 @@ p {
 }
 
 .contact-methods svg {
-  color: #3c7e43;
+  color: var(--brand-olive);
 }
 
 .contact-form {
@@ -1742,8 +2398,8 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #62b63f;
-  box-shadow: 0 0 0 4px rgba(98, 182, 63, 0.16);
+  border-color: var(--brand-gold);
+  box-shadow: 0 0 0 4px rgba(182, 138, 42, 0.16);
 }
 
 .contact-form__submit {
@@ -1752,7 +2408,7 @@ textarea:focus {
 
 .form-confirmation {
   margin-bottom: 0;
-  color: #2f7d45;
+  color: var(--brand-olive);
   font-weight: 800;
 }
 
@@ -1771,11 +2427,13 @@ textarea:focus {
 
 .footer__logo {
   display: block;
-  width: 220px;
+  width: 290px;
   max-width: 100%;
+  height: 112px;
   margin-bottom: 18px;
   border-radius: 8px;
   background: #ffffff;
+  object-fit: contain;
 }
 
 .footer p {
@@ -1803,7 +2461,7 @@ textarea:focus {
 }
 
 .footer__links button:hover {
-  color: #a7df76;
+  color: var(--brand-gold-light);
 }
 
 .footer__bottom {
@@ -1862,13 +2520,30 @@ textarea:focus {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .product-card__body {
+    min-height: 0;
+  }
+
   .best-sellers,
   .origin-grid,
   .shipping-grid,
   .education-grid,
   .contact-grid,
-  .quality-checks {
+  .quality-checks,
+  .local-suppliers,
+  .delivery-tracking__heading {
     grid-template-columns: 1fr;
+  }
+
+  .delivery-grid {
+    grid-template-columns: repeat(3, minmax(240px, 1fr));
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .delivery-card {
+    scroll-snap-align: start;
   }
 
   .education-visual {
@@ -1931,7 +2606,16 @@ textarea:focus {
   }
 
   .nav__brand img {
-    width: 138px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .nav__brand strong {
+    font-size: 0.96rem;
+  }
+
+  .nav__brand small {
+    font-size: 0.6rem;
   }
 
   .nav__toggle {
@@ -1954,10 +2638,19 @@ textarea:focus {
     justify-content: flex-start;
   }
 
+  .product-card {
+    height: 620px;
+  }
+
+  .product-card__image {
+    height: 240px;
+  }
+
   .hero__proof,
   .product-grid,
   .quality-grid,
   .export-steps,
+  .delivery-grid,
   .check-list--columns,
   .form-row,
   .footer__inner,
@@ -1988,8 +2681,43 @@ textarea:focus {
     grid-auto-rows: 220px;
   }
 
-  .shipment-gallery img:first-child {
+  .shipment-gallery figure:first-child {
     grid-row: auto;
+  }
+
+  .local-suppliers {
+    margin-top: 44px;
+  }
+
+  .local-suppliers__copy {
+    padding: 26px 22px;
+  }
+
+  .local-suppliers__copy h3 {
+    font-size: 1.65rem;
+  }
+
+  .farm-video,
+  .farm-video video {
+    min-height: 250px;
+  }
+
+  .delivery-tracking {
+    margin-top: 52px;
+    padding-top: 52px;
+  }
+
+  .delivery-tracking__heading {
+    gap: 18px;
+  }
+
+  .delivery-grid {
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .delivery-card__image {
+    height: 420px;
   }
 
   .contact-form {
@@ -1998,6 +2726,27 @@ textarea:focus {
 
   .footer__bottom {
     display: grid;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(html) {
+    scroll-behavior: auto;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .product-card,
+  .product-card__image img,
+  .shipment-gallery img,
+  .delivery-card__image img,
+  .button,
+  .social-button {
+    transition: none;
   }
 }
 </style>

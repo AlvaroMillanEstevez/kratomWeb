@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, reactive, ref, type Component } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch,
+  type Component,
+} from 'vue'
 import {
   ArrowRight,
   Boxes,
@@ -26,6 +35,7 @@ import {
   UsersRound,
   X,
 } from '@lucide/vue'
+import { languageOptions, messages, supportedLocales, type Locale } from './i18n'
 
 type IconComponent = Component
 
@@ -55,14 +65,27 @@ const images = {
   deliveryThree: publicAsset('shippmentProof (3).png'),
 }
 
-const navItems = [
-  { id: 'origin', label: 'Origin' },
-  { id: 'products', label: 'Products' },
-  { id: 'quality', label: 'Quality' },
-  { id: 'shipping', label: 'Export' },
-  { id: 'education', label: 'Knowledge' },
-  { id: 'contact', label: 'Contact' },
-]
+function getInitialLocale(): Locale {
+  if (typeof window === 'undefined') return 'en'
+
+  const storedLocale = window.localStorage.getItem('art-botanical-locale')
+  if (storedLocale && supportedLocales.includes(storedLocale as Locale)) {
+    return storedLocale as Locale
+  }
+
+  const browserLocale = window.navigator.language.toLowerCase()
+  if (browserLocale.startsWith('es')) return 'es'
+  if (browserLocale.startsWith('id')) return 'id'
+  return 'en'
+}
+
+const locale = ref<Locale>(getInitialLocale())
+const copy = computed(() => messages[locale.value])
+
+const navItemIds = ['origin', 'products', 'quality', 'shipping', 'education', 'contact'] as const
+const navItems = computed(() =>
+  navItemIds.map((id) => ({ id, label: copy.value.nav.items[id] })),
+)
 
 const socialLinks = [
   { name: 'Instagram', network: 'instagram', href: 'https://instagram.com/artbotanicalind' },
@@ -74,188 +97,156 @@ const socialLinks = [
   },
 ]
 
-const trustItems: Array<{ icon: IconComponent; value: string; label: string }> = [
-  { icon: ShieldCheck, value: 'COA', label: 'batch documentation' },
-  { icon: Globe, value: 'Legal markets', label: 'buyer-side import check' },
-  { icon: PackageCheck, value: 'Bulk ready', label: 'sample packs to cartons' },
-  { icon: Leaf, value: 'Indonesia', label: 'local supplier network' },
+const trustItemConfig: Array<{ id: keyof (typeof messages)['en']['proof']['items']; icon: IconComponent }> = [
+  { id: 'coa', icon: ShieldCheck },
+  { id: 'markets', icon: Globe },
+  { id: 'bulk', icon: PackageCheck },
+  { id: 'indonesia', icon: Leaf },
 ]
 
-const products = [
+const trustItems = computed(() =>
+  trustItemConfig.map((item) => ({ ...item, ...copy.value.proof.items[item.id] })),
+)
+
+const productConfig = [
   {
     id: 'green-vein',
-    name: 'Green Vein Kratom',
-    inquiryValue: 'Green vein powder',
-    badge: 'Balanced profile',
+    inquiryValue: 'green-vein',
     image: images.productGreen,
     color: '#2f7d45',
-    description:
-      'A vivid green powder profile for buyers looking for a balanced catalogue anchor. The current available lab sheet is prepared from a green powder sample.',
-    specs: ['Fine powder format', 'Batch COA available', 'Bulk cartons or sample packs', 'Best for flagship SKUs'],
-    varieties: ['Green Maeng Da', 'Green Sumatra', 'Green Borneo', 'Green Bali'],
   },
   {
     id: 'red-vein',
-    name: 'Red Vein Kratom',
-    inquiryValue: 'Red vein powder',
-    badge: 'Mature leaf profile',
+    inquiryValue: 'red-vein',
     image: images.productRed,
     color: '#8f3b2f',
-    description:
-      'A deeper powder tone typically selected for evening-oriented product ranges. COA slot is prepared and will be attached when the red batch analysis arrives.',
-    specs: ['Fine powder format', 'Red COA incoming', 'Sealed inner liners', 'Private label ready'],
-    varieties: ['Red Maeng Da', 'Red Sumatra', 'Red Borneo', 'Red Bali'],
   },
   {
     id: 'white-vein',
-    name: 'White Vein Kratom',
-    inquiryValue: 'White vein powder',
-    badge: 'Active catalogue profile',
+    inquiryValue: 'white-vein',
     image: images.productWhite,
     color: '#81783f',
-    description:
-      'A lighter powder profile for buyers building a complete green, red and white assortment. Sample formats can be arranged before bulk allocation.',
-    specs: ['Fine powder format', 'White COA incoming', 'Sample packs available', 'Export carton packing'],
-    varieties: ['White Maeng Da', 'White Sumatra', 'White Borneo', 'White Bali'],
   },
   {
     id: 'extract-powder',
-    name: 'Extract Powder',
-    inquiryValue: 'Extract powder',
-    badge: 'Special extraction',
+    inquiryValue: 'extract-powder',
     image: images.productExtract,
     color: '#7b6335',
-    description:
-      'Concentrated kratom formats for specialist catalogues. Extract powder can look similar to standard leaf powder, so concentration must be defined by ratio, process and batch documentation rather than appearance alone.',
-    specs: [
-      'Extract powder: concentrated powder such as 10:1, 20:1 or 50:1',
-      'Resin or paste: darker, dense and resinous texture',
-      'Liquid extract or tincture: concentrated liquid format',
-      'Enhanced kratom: leaf powder blended with extract',
-    ],
-    varieties: ['Extract powder', 'Resin / paste', 'Liquid extract', 'Enhanced kratom'],
   },
-]
+] as const
 
-const bestSellerGroups = [
+const products = computed(() =>
+  productConfig.map((product) => ({
+    ...product,
+    ...copy.value.products.items[product.id],
+  })),
+)
+
+const bestSellerGroups = computed(() => [
   {
-    title: 'Green line',
+    title: copy.value.products.bestSellers.groups.green,
     items: ['Maeng Da', 'Sumatra', 'Borneo', 'Bali', 'Elephant', 'Malay'],
   },
   {
-    title: 'Red line',
+    title: copy.value.products.bestSellers.groups.red,
     items: ['Maeng Da', 'Sumatra', 'Borneo', 'Bali', 'Horn', 'Aceh'],
   },
   {
-    title: 'White line',
+    title: copy.value.products.bestSellers.groups.white,
     items: ['Maeng Da', 'Sumatra', 'Borneo', 'Bali', 'Hulu', 'Indo'],
   },
-]
+])
 
-const qualityCards = [
+const qualityCardConfig = [
   {
-    title: 'Green powder COA',
-    status: 'Available',
+    id: 'green',
+    status: 'available',
     icon: FileCheck,
     image: images.labGreen,
-    detail: 'Sentarum Laboratory report for green powder, March 2025, HPLC mitragynine marker shown.',
   },
   {
-    title: 'Red powder COA',
-    status: 'Incoming',
+    id: 'red',
+    status: 'incoming',
     icon: FlaskConical,
     image: '',
-    detail: 'Reserved report slot for the red vein batch analysis. The document image can be added as soon as it arrives.',
   },
   {
-    title: 'White powder COA',
-    status: 'Incoming',
+    id: 'white',
+    status: 'incoming',
     icon: FlaskConical,
     image: '',
-    detail: 'Reserved report slot for the white vein batch analysis. The layout is ready for the next laboratory sheet.',
   },
   {
-    title: 'Extract powder COA',
-    status: 'Incoming',
+    id: 'extract',
+    status: 'incoming',
     icon: FlaskConical,
     image: '',
-    detail:
-      'Reserved report slot for the extract powder analysis, including concentration ratio and batch-specific verification when available.',
   },
-]
+] as const
 
-const qualityChecks = [
-  'HPLC alkaloid marker review by batch',
-  'Microbiological, heavy-metal and adulteration checks when requested by buyer specification',
-  'Lot traceability from supplier intake through packing',
-  'Export documentation reviewed before shipment confirmation',
-]
+const qualityCards = computed(() =>
+  qualityCardConfig.map((card) => ({
+    ...card,
+    ...copy.value.quality.cards[card.id],
+    statusLabel: copy.value.quality.status[card.status],
+  })),
+)
 
-const exportSteps: Array<{ icon: IconComponent; title: string; body: string }> = [
+const exportStepConfig: Array<{
+  id: keyof (typeof messages)['en']['shipping']['steps']
+  icon: IconComponent
+}> = [
   {
+    id: 'legality',
     icon: Scale,
-    title: 'Destination legality',
-    body: 'We only quote and ship where import, possession and onward sale can be confirmed by the buyer.',
   },
   {
+    id: 'batch',
     icon: ClipboardCheck,
-    title: 'Batch selection',
-    body: 'Samples, vein profile, quantity, mesh, documentation and packaging format are confirmed before allocation.',
   },
   {
+    id: 'packing',
     icon: Boxes,
-    title: 'Packing workflow',
-    body: 'Powder is sealed in inner liners, packed into cartons and prepared for freight or courier routing.',
   },
   {
+    id: 'coordination',
     icon: Truck,
-    title: 'Export coordination',
-    body: 'Shipment images and document references are shared so buyers can follow each stage with confidence.',
   },
 ]
+
+const exportSteps = computed(() =>
+  exportStepConfig.map((step) => ({ ...step, ...copy.value.shipping.steps[step.id] })),
+)
 
 const deliveryProofs = [
   {
     image: images.deliveryOne,
-    date: 'May 8, 2026',
-    destination: 'United States',
+    date: '2026-05-08',
     carrier: 'UPS',
   },
   {
     image: images.deliveryTwo,
-    date: 'May 11, 2026',
-    destination: 'United States',
+    date: '2026-05-11',
     carrier: 'UPS',
   },
   {
     image: images.deliveryThree,
-    date: 'May 11, 2026',
-    destination: 'United States',
+    date: '2026-05-11',
     carrier: 'UPS',
   },
 ]
 
-const educationProfiles = [
-  {
-    title: 'Green vein',
-    body: 'Often positioned by the market as the balanced middle profile between active and calm catalogue lines.',
-  },
-  {
-    title: 'Red vein',
-    body: 'Often positioned as the deeper, mature leaf profile. Communication should avoid medical treatment claims.',
-  },
-  {
-    title: 'White vein',
-    body: 'Often positioned as the brighter profile for active product assortments and morning-facing catalogue ranges.',
-  },
-]
+const educationProfileIds = ['green', 'red', 'white'] as const
+const educationProfiles = computed(() =>
+  educationProfileIds.map((id) => copy.value.education.profiles[id]),
+)
 
 const form = reactive({
   name: '',
   company: '',
   email: '',
   country: '',
-  product: 'Green vein powder',
+  product: 'green-vein',
   quantity: '',
   message: '',
 })
@@ -263,6 +254,26 @@ const form = reactive({
 const isMenuOpen = ref(false)
 const formSent = ref(false)
 const expandedProductId = ref<string | null>(null)
+
+const intlLocales: Record<Locale, string> = {
+  en: 'en-US',
+  es: 'es-ES',
+  id: 'id-ID',
+}
+
+function formatDeliveryDate(date: string) {
+  return new Intl.DateTimeFormat(intlLocales[locale.value], {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${date}T12:00:00Z`))
+}
+
+function setLocale(event: Event) {
+  locale.value = (event.target as HTMLSelectElement).value as Locale
+  isMenuOpen.value = false
+}
 
 function scrollToSection(id: string) {
   isMenuOpen.value = false
@@ -287,9 +298,14 @@ function closeProductDetails(productId: string) {
   })
 }
 
-function requestProduct(product: (typeof products)[number]) {
+function requestProduct(product: { inquiryValue: string }) {
   form.product = product.inquiryValue
   expandedProductId.value = null
+  scrollToSection('contact')
+}
+
+function requestGeneralSample() {
+  form.product = 'mixed-sample'
   scrollToSection('contact')
 }
 
@@ -300,14 +316,18 @@ function handleEscape(event: KeyboardEvent) {
 }
 
 function handleSubmit() {
-  const subject = `${brandName} inquiry from ${form.company || form.name || 'new buyer'}`
+  const formCopy = copy.value.contact.form
+  const emailCopy = copy.value.contact.email
+  const selectedProduct =
+    formCopy.productOptions.find((option) => option.value === form.product)?.label ?? form.product
+  const subject = `${emailCopy.subject} ${form.company || form.name || emailCopy.newBuyer}`
   const body = [
-    `Name: ${form.name}`,
-    `Company: ${form.company}`,
-    `Email: ${form.email}`,
-    `Country: ${form.country}`,
-    `Product: ${form.product}`,
-    `Quantity: ${form.quantity}`,
+    `${emailCopy.fields.name}: ${form.name}`,
+    `${emailCopy.fields.company}: ${form.company}`,
+    `${emailCopy.fields.email}: ${form.email}`,
+    `${emailCopy.fields.country}: ${form.country}`,
+    `${emailCopy.fields.product}: ${selectedProduct}`,
+    `${emailCopy.fields.quantity}: ${form.quantity}`,
     '',
     form.message,
   ].join('\n')
@@ -315,6 +335,22 @@ function handleSubmit() {
   window.location.href = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   formSent.value = true
 }
+
+watch(
+  locale,
+  (value) => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = value
+      document
+        .querySelector('meta[name="description"]')
+        ?.setAttribute('content', copy.value.meta.description)
+    }
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('art-botanical-locale', value)
+    }
+  },
+  { immediate: true },
+)
 
 onMounted(() => {
   window.addEventListener('keydown', handleEscape)
@@ -341,12 +377,13 @@ onUnmounted(() => {
 
 <template>
   <div class="site">
-    <header id="top" class="hero">
+    <div class="hero-stage">
       <img class="hero__image" :src="images.productGreen" alt="" />
       <div class="hero__shade"></div>
 
-      <nav class="nav" aria-label="Primary navigation">
-        <a class="nav__brand" href="#top" :aria-label="`${brandName} home`">
+      <header id="top" class="hero">
+      <nav class="nav" :aria-label="copy.nav.aria">
+        <a class="nav__brand" href="#top" :aria-label="copy.nav.home">
           <img :src="images.logoMark" alt="" />
           <span>
             <strong>A.R.T.</strong>
@@ -367,15 +404,32 @@ onUnmounted(() => {
         </div>
 
         <div class="nav__actions">
+          <label class="language-selector" :title="copy.languageLabel">
+            <Globe :size="17" aria-hidden="true" />
+            <span class="sr-only">{{ copy.languageLabel }}</span>
+            <select
+              :value="locale"
+              :aria-label="copy.languageLabel"
+              @change="setLocale"
+            >
+              <option
+                v-for="language in languageOptions"
+                :key="language.value"
+                :value="language.value"
+              >
+                {{ language.shortLabel }}
+              </option>
+            </select>
+          </label>
           <button class="nav__cta" type="button" @click="scrollToSection('contact')">
-            Quote
+            {{ copy.nav.contact }}
             <ArrowRight :size="16" aria-hidden="true" />
           </button>
           <button
             class="nav__toggle"
             type="button"
             :aria-expanded="isMenuOpen"
-            aria-label="Toggle navigation"
+            :aria-label="copy.nav.toggle"
             @click="isMenuOpen = !isMenuOpen"
           >
             <Menu v-if="!isMenuOpen" :size="22" aria-hidden="true" />
@@ -388,27 +442,23 @@ onUnmounted(() => {
         <div class="hero__copy reveal">
           <p class="eyebrow">
             <Sprout :size="18" aria-hidden="true" />
-            Indonesian origin, export-first sourcing
+            {{ copy.hero.eyebrow }}
           </p>
-          <h1>Indonesian kratom export, verified from leaf to shipment.</h1>
-          <p class="hero__lead">
-            ART Botanical IND connects certified local supply in Indonesia with buyers in legal
-            receiving markets, combining real product batches, lab documentation and export-ready
-            packing.
-          </p>
+          <h1>{{ copy.hero.title }}</h1>
+          <p class="hero__lead">{{ copy.hero.lead }}</p>
 
           <div class="hero__actions">
-            <button class="button button--primary" type="button" @click="scrollToSection('contact')">
-              Request export quote
+            <button class="button button--primary" type="button" @click="requestGeneralSample">
+              {{ copy.hero.requestSample }}
               <Send :size="18" aria-hidden="true" />
             </button>
             <button class="button button--ghost" type="button" @click="scrollToSection('quality')">
-              View quality proof
+              {{ copy.hero.qualityProof }}
               <FileCheck :size="18" aria-hidden="true" />
             </button>
           </div>
 
-          <div class="social-row social-row--hero" aria-label="Social channels">
+          <div class="social-row social-row--hero" :aria-label="copy.hero.socialAria">
             <a
               v-for="social in socialLinks"
               :key="social.name"
@@ -428,10 +478,9 @@ onUnmounted(() => {
         </div>
       </div>
 
-    </header>
+      </header>
 
-    <main>
-      <section class="proof-section" aria-label="Supply proof highlights">
+      <section class="proof-section" :aria-label="copy.proof.aria">
         <div class="hero__proof section-shell reveal">
           <div v-for="item in trustItems" :key="item.value" class="proof-item">
             <component :is="item.icon" :size="22" aria-hidden="true" />
@@ -442,39 +491,31 @@ onUnmounted(() => {
           </div>
         </div>
       </section>
+    </div>
 
+    <main>
       <section id="origin" class="section section--origin">
         <div class="section-shell origin-grid">
           <div class="section-copy reveal">
             <p class="eyebrow">
               <MapPin :size="18" aria-hidden="true" />
-              West Kalimantan supply network
+              {{ copy.origin.eyebrow }}
             </p>
-            <h2>Indonesia has become one of the key kratom sourcing regions for global buyers.</h2>
-            <p>
-              Kratom grows naturally across parts of Southeast Asia, and West Kalimantan has built
-              a strong farming and processing ecosystem around Mitragyna speciosa. Our sourcing
-              model keeps the story close to the people handling the leaf: local suppliers,
-              practical quality checks and export documents that buyers can review before payment.
-            </p>
-            <p>
-              A documentary section is prepared for the upcoming field video with suppliers,
-              farmers and packing partners. When the video is ready, this block can become the
-              storytelling anchor of the site.
-            </p>
+            <h2>{{ copy.origin.title }}</h2>
+            <p v-for="paragraph in copy.origin.paragraphs" :key="paragraph">{{ paragraph }}</p>
           </div>
 
           <div class="documentary reveal">
-            <div class="documentary__video" aria-label="Documentary video placeholder">
+            <div class="documentary__video" :aria-label="copy.origin.documentaryAria">
               <img :src="images.boxedShipment" alt="" loading="lazy" />
               <Play :size="48" aria-hidden="true" />
-              <span>Documentary video coming soon</span>
+              <span>{{ copy.origin.documentaryComing }}</span>
             </div>
             <div class="documentary__caption">
               <img :src="images.logoMark" alt="" />
               <div>
-                <strong>Field sourcing documentary</strong>
-                <span>Supplier interviews, processing flow and real batch preparation.</span>
+                <strong>{{ copy.origin.documentaryTitle }}</strong>
+                <span>{{ copy.origin.documentaryCaption }}</span>
               </div>
             </div>
           </div>
@@ -484,18 +525,14 @@ onUnmounted(() => {
           <div class="local-suppliers__copy">
             <p class="eyebrow">
               <UsersRound :size="18" aria-hidden="true" />
-              Our local suppliers
+              {{ copy.origin.suppliersEyebrow }}
             </p>
-            <h3>Direct relationships with growers and production gardens.</h3>
-            <p>
-              This first field video offers a short look at one of the gardens connected to our
-              supplier network. Future updates will document leaf harvesting, drying, milling,
-              storage and batch preparation directly from the people handling the product.
-            </p>
+            <h3>{{ copy.origin.suppliersTitle }}</h3>
+            <p>{{ copy.origin.suppliersBody }}</p>
             <div class="supplier-points">
-              <span><Sprout :size="17" aria-hidden="true" /> Garden-level sourcing</span>
-              <span><Route :size="17" aria-hidden="true" /> Shorter supply chain</span>
-              <span><ShieldCheck :size="17" aria-hidden="true" /> Traceable partners</span>
+              <span><Sprout :size="17" aria-hidden="true" /> {{ copy.origin.supplierPoints[0] }}</span>
+              <span><Route :size="17" aria-hidden="true" /> {{ copy.origin.supplierPoints[1] }}</span>
+              <span><ShieldCheck :size="17" aria-hidden="true" /> {{ copy.origin.supplierPoints[2] }}</span>
             </div>
           </div>
 
@@ -506,13 +543,13 @@ onUnmounted(() => {
               controls
               playsinline
               preload="metadata"
-              aria-label="Video from a local supplier production garden"
+              :aria-label="copy.origin.videoAria"
             >
-              Your browser does not support HTML video.
+              {{ copy.origin.videoUnsupported }}
             </video>
             <div class="farm-video__label">
               <Sprout :size="18" aria-hidden="true" />
-              Production garden, Indonesia
+              {{ copy.origin.gardenLabel }}
             </div>
           </div>
         </div>
@@ -523,21 +560,17 @@ onUnmounted(() => {
           <div class="section-heading reveal">
             <p class="eyebrow">
               <Leaf :size="18" aria-hidden="true" />
-              Product specifications
+              {{ copy.products.eyebrow }}
             </p>
-            <h2>Vein lines and specialty extracts for export catalogues.</h2>
-            <p>
-              Green, red and white vein profiles are joined by concentrated extract formats, each
-              presented with real product visuals and a direct path to request specifications,
-              pricing or bulk allocation.
-            </p>
+            <h2>{{ copy.products.title }}</h2>
+            <p>{{ copy.products.intro }}</p>
           </div>
 
           <div class="product-grid">
             <article
               v-for="product in products"
               :id="`product-${product.id}`"
-              :key="product.name"
+              :key="product.id"
               class="product-card reveal"
               :class="{ 'product-card--details': expandedProductId === product.id }"
               :style="{ '--product-color': product.color }"
@@ -553,7 +586,7 @@ onUnmounted(() => {
                 </div>
                 <div class="product-card__body">
                   <h3>{{ product.name }}</h3>
-                  <p class="product-card__format-label">Available formats</p>
+                  <p class="product-card__format-label">{{ copy.products.availableFormats }}</p>
                   <div class="variety-list">
                     <span v-for="variety in product.varieties" :key="variety">{{ variety }}</span>
                   </div>
@@ -565,11 +598,11 @@ onUnmounted(() => {
                       :aria-controls="`product-details-${product.id}`"
                       @click="openProductDetails(product.id)"
                     >
-                      View specifications
+                      {{ copy.products.viewSpecifications }}
                       <ArrowRight :size="17" aria-hidden="true" />
                     </button>
                     <button class="text-action" type="button" @click="requestProduct(product)">
-                      Request a quote
+                      {{ copy.products.requestSample }}
                       <Send :size="16" aria-hidden="true" />
                     </button>
                   </div>
@@ -582,13 +615,13 @@ onUnmounted(() => {
                   :id="`product-details-${product.id}`"
                   class="product-card__details"
                   role="region"
-                  :aria-label="`${product.name} specifications`"
+                  :aria-label="`${product.name}: ${copy.products.specifications}`"
                 >
                   <button
                     class="product-card__close"
                     type="button"
-                    :aria-label="`Back to ${product.name}`"
-                    :title="`Back to ${product.name}`"
+                    :aria-label="`${copy.products.backToProduct}: ${product.name}`"
+                    :title="`${copy.products.backToProduct}: ${product.name}`"
                     @click="closeProductDetails(product.id)"
                   >
                     <X :size="20" aria-hidden="true" />
@@ -598,7 +631,7 @@ onUnmounted(() => {
                   <h3>{{ product.name }}</h3>
                   <p class="product-card__description">{{ product.description }}</p>
 
-                  <strong class="product-card__spec-title">Product specifications</strong>
+                  <strong class="product-card__spec-title">{{ copy.products.specifications }}</strong>
                   <ul class="check-list product-card__spec-list">
                     <li v-for="spec in product.specs" :key="spec">
                       <Check :size="16" aria-hidden="true" />
@@ -613,14 +646,14 @@ onUnmounted(() => {
                       @click="closeProductDetails(product.id)"
                     >
                       <X :size="16" aria-hidden="true" />
-                      Back to product
+                      {{ copy.products.backToProduct }}
                     </button>
                     <button
                       class="product-card__quote"
                       type="button"
                       @click="requestProduct(product)"
                     >
-                      Request quote
+                      {{ copy.products.requestSample }}
                       <ArrowRight :size="16" aria-hidden="true" />
                     </button>
                   </div>
@@ -631,12 +664,9 @@ onUnmounted(() => {
 
           <div class="best-sellers reveal">
             <div>
-              <p class="eyebrow">Buyer catalogue planning</p>
-              <h3>Best-seller families ready for quotation.</h3>
-              <p>
-                Build a complete range from familiar international names while keeping batch
-                documentation and import compliance attached to each order.
-              </p>
+              <p class="eyebrow">{{ copy.products.bestSellers.eyebrow }}</p>
+              <h3>{{ copy.products.bestSellers.title }}</h3>
+              <p>{{ copy.products.bestSellers.body }}</p>
             </div>
             <div class="best-sellers__groups">
               <div v-for="group in bestSellerGroups" :key="group.title" class="best-sellers__group">
@@ -644,7 +674,7 @@ onUnmounted(() => {
                 <span>{{ group.items.join(' / ') }}</span>
               </div>
             </div>
-            <div class="best-sellers__image" aria-label="Original best sellers reference crop">
+            <div class="best-sellers__image" :aria-label="copy.products.bestSellers.imageAria">
               <img :src="images.bestSellers" alt="" loading="lazy" />
             </div>
           </div>
@@ -656,27 +686,23 @@ onUnmounted(() => {
           <div class="section-heading section-heading--light reveal">
             <p class="eyebrow">
               <ShieldCheck :size="18" aria-hidden="true" />
-              Quality verification
+              {{ copy.quality.eyebrow }}
             </p>
-            <h2>Laboratory evidence and prepared COA slots across the catalogue.</h2>
-            <p>
-              The green powder analysis is visible today. Red, white and extract powder report
-              positions are ready so the same verification structure can be completed as soon as
-              each document arrives.
-            </p>
+            <h2>{{ copy.quality.title }}</h2>
+            <p>{{ copy.quality.intro }}</p>
           </div>
 
           <div class="quality-grid">
-            <article v-for="card in qualityCards" :key="card.title" class="quality-card reveal">
+            <article v-for="card in qualityCards" :key="card.id" class="quality-card reveal">
               <div v-if="card.image" class="quality-card__image">
                 <img :src="card.image" :alt="card.title" loading="lazy" />
               </div>
               <div v-else class="quality-card__placeholder">
                 <component :is="card.icon" :size="44" aria-hidden="true" />
-                <span>COA image slot</span>
+                <span>{{ copy.quality.placeholder }}</span>
               </div>
               <div class="quality-card__body">
-                <span class="status-pill">{{ card.status }}</span>
+                <span class="status-pill">{{ card.statusLabel }}</span>
                 <h3>{{ card.title }}</h3>
                 <p>{{ card.detail }}</p>
               </div>
@@ -685,11 +711,11 @@ onUnmounted(() => {
 
           <div class="quality-checks reveal">
             <div>
-              <p class="eyebrow">Documentation workflow</p>
-              <h3>Quality language built for serious importers.</h3>
+              <p class="eyebrow">{{ copy.quality.workflowEyebrow }}</p>
+              <h3>{{ copy.quality.workflowTitle }}</h3>
             </div>
             <ul class="check-list check-list--columns">
-              <li v-for="check in qualityChecks" :key="check">
+              <li v-for="check in copy.quality.checks" :key="check">
                 <Check :size="17" aria-hidden="true" />
                 {{ check }}
               </li>
@@ -703,32 +729,36 @@ onUnmounted(() => {
           <div class="section-copy reveal">
             <p class="eyebrow">
               <Truck :size="18" aria-hidden="true" />
-              Packing and export flow
+              {{ copy.shipping.eyebrow }}
             </p>
-            <h2>Real shipment proof, carton packing and buyer-side compliance first.</h2>
-            <p>
-              Export orders are treated as regulated commercial shipments, not casual parcels. The
-              buyer confirms destination legality, then we align batch, documents, packing format
-              and route before release.
-            </p>
+            <h2>{{ copy.shipping.title }}</h2>
+            <p>{{ copy.shipping.body }}</p>
           </div>
 
           <div class="shipment-gallery reveal">
             <figure>
               <img
                 :src="images.samplePacks"
-                alt="Labelled kratom varieties prepared for packing"
+                :alt="copy.shipping.gallery.selectedAlt"
                 loading="lazy"
               />
-              <figcaption>Selected varieties</figcaption>
+              <figcaption>{{ copy.shipping.gallery.selected }}</figcaption>
             </figure>
             <figure>
-              <img :src="images.boxedShipment" alt="Prepared kratom export cartons" loading="lazy" />
-              <figcaption>Bulk cartons</figcaption>
+              <img
+                :src="images.boxedShipment"
+                :alt="copy.shipping.gallery.cartonsAlt"
+                loading="lazy"
+              />
+              <figcaption>{{ copy.shipping.gallery.cartons }}</figcaption>
             </figure>
             <figure>
-              <img :src="images.cartonCloseup" alt="Sealed carton example" loading="lazy" />
-              <figcaption>Sealed shipment</figcaption>
+              <img
+                :src="images.cartonCloseup"
+                :alt="copy.shipping.gallery.sealedAlt"
+                loading="lazy"
+              />
+              <figcaption>{{ copy.shipping.gallery.sealed }}</figcaption>
             </figure>
           </div>
         </div>
@@ -746,27 +776,30 @@ onUnmounted(() => {
             <div>
               <p class="eyebrow">
                 <RadioTower :size="18" aria-hidden="true" />
-                Real-time shipment tracking
+                {{ copy.shipping.tracking.eyebrow }}
               </p>
-              <h2>From dispatch updates to successful delivery.</h2>
+              <h2>{{ copy.shipping.tracking.title }}</h2>
             </div>
-            <p>
-              Buyers receive carrier references for live shipment monitoring. These recent tracking
-              records show three independently delivered consignments, with private tracking data
-              concealed.
-            </p>
+            <p>{{ copy.shipping.tracking.body }}</p>
           </div>
 
           <div class="delivery-grid">
             <article v-for="proof in deliveryProofs" :key="`${proof.date}-${proof.image}`" class="delivery-card reveal">
               <div class="delivery-card__image">
-                <img :src="proof.image" alt="Successful shipment delivery tracking confirmation" loading="lazy" />
+                <img
+                  :src="proof.image"
+                  :alt="copy.shipping.tracking.imageAlt"
+                  loading="lazy"
+                />
               </div>
               <div class="delivery-card__body">
                 <CircleCheckBig :size="22" aria-hidden="true" />
                 <div>
-                  <strong>Delivered successfully</strong>
-                  <span>{{ proof.carrier }} · {{ proof.destination }} · {{ proof.date }}</span>
+                  <strong>{{ copy.shipping.tracking.delivered }}</strong>
+                  <span>
+                    {{ proof.carrier }} · {{ copy.shipping.tracking.destination }} ·
+                    {{ formatDeliveryDate(proof.date) }}
+                  </span>
                 </div>
               </div>
             </article>
@@ -776,25 +809,21 @@ onUnmounted(() => {
 
       <section id="education" class="section section--education">
         <div class="section-shell education-grid">
-          <div class="education-visual reveal" aria-label="Kratom effect guide visual">
+          <div class="education-visual reveal" :aria-label="copy.education.visualAria">
             <img :src="images.effectsGuide" alt="" loading="lazy" />
             <div class="education-visual__overlay">
               <Leaf :size="34" aria-hidden="true" />
-              <span>Vein profile guide</span>
+              <span>{{ copy.education.visualLabel }}</span>
             </div>
           </div>
 
           <div class="section-copy reveal">
             <p class="eyebrow">
               <FlaskConical :size="18" aria-hidden="true" />
-              Benefits and effects, responsibly framed
+              {{ copy.education.eyebrow }}
             </p>
-            <h2>Clear market education without medical promises.</h2>
-            <p>
-              Kratom buyers often organise catalogues by green, red and white vein profiles. The
-              descriptions below reflect common market positioning and reported user language, not
-              treatment claims or medical advice.
-            </p>
+            <h2>{{ copy.education.title }}</h2>
+            <p>{{ copy.education.body }}</p>
             <div class="profile-list">
               <article v-for="profile in educationProfiles" :key="profile.title">
                 <h3>{{ profile.title }}</h3>
@@ -803,10 +832,7 @@ onUnmounted(() => {
             </div>
             <div class="compliance-note">
               <ShieldCheck :size="20" aria-hidden="true" />
-              <span>
-                Kratom is not presented here as a medicine. Importers are responsible for product
-                classification, label language and local consumer regulations in their market.
-              </span>
+              <span>{{ copy.education.compliance }}</span>
             </div>
           </div>
         </div>
@@ -817,13 +843,10 @@ onUnmounted(() => {
           <div class="section-copy reveal">
             <p class="eyebrow">
               <Mail :size="18" aria-hidden="true" />
-              Contact ART Botanical IND
+              {{ copy.contact.eyebrow }}
             </p>
-            <h2>Tell us your destination, vein profile and target quantity.</h2>
-            <p>
-              We will confirm whether the destination can be served, then prepare pricing,
-              documentation status and sample or bulk order options.
-            </p>
+            <h2>{{ copy.contact.title }}</h2>
+            <p>{{ copy.contact.body }}</p>
 
             <div class="contact-methods">
               <a :href="`mailto:${contactEmail}`">
@@ -832,7 +855,7 @@ onUnmounted(() => {
               </a>
               <a :href="`https://wa.me/${whatsappNumber}`" target="_blank" rel="noopener">
                 <Phone :size="20" aria-hidden="true" />
-                WhatsApp export desk
+                {{ copy.contact.whatsapp }}
               </a>
             </div>
           </div>
@@ -840,61 +863,61 @@ onUnmounted(() => {
           <form class="contact-form reveal" @submit.prevent="handleSubmit">
             <div class="form-row">
               <label>
-                Name
+                {{ copy.contact.form.name }}
                 <input v-model="form.name" required name="name" autocomplete="name" />
               </label>
               <label>
-                Company
+                {{ copy.contact.form.company }}
                 <input v-model="form.company" name="company" autocomplete="organization" />
               </label>
             </div>
             <div class="form-row">
               <label>
-                Email
+                {{ copy.contact.form.email }}
                 <input v-model="form.email" required type="email" name="email" autocomplete="email" />
               </label>
               <label>
-                Country
+                {{ copy.contact.form.country }}
                 <input v-model="form.country" required name="country" autocomplete="country-name" />
               </label>
             </div>
             <div class="form-row">
               <label>
-                Product
+                {{ copy.contact.form.product }}
                 <select v-model="form.product" name="product">
-                  <option>Green vein powder</option>
-                  <option>Red vein powder</option>
-                  <option>White vein powder</option>
-                  <option>Extract powder</option>
-                  <option>Resin / paste</option>
-                  <option>Liquid extract / tincture</option>
-                  <option>Enhanced kratom</option>
-                  <option>Mixed sample set</option>
-                  <option>Private label bulk order</option>
+                  <option
+                    v-for="option in copy.contact.form.productOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
                 </select>
               </label>
               <label>
-                Target quantity
-                <input v-model="form.quantity" name="quantity" placeholder="Example: 25 kg / 100 kg" />
+                {{ copy.contact.form.quantity }}
+                <input
+                  v-model="form.quantity"
+                  name="quantity"
+                  :placeholder="copy.contact.form.quantityPlaceholder"
+                />
               </label>
             </div>
             <label>
-              Message
+              {{ copy.contact.form.message }}
               <textarea
                 v-model="form.message"
                 required
                 name="message"
                 rows="5"
-                placeholder="Destination, required documents, packaging preference, timeline..."
+                :placeholder="copy.contact.form.messagePlaceholder"
               ></textarea>
             </label>
             <button class="button button--primary contact-form__submit" type="submit">
-              Send inquiry
+              {{ copy.contact.form.submit }}
               <Send :size="18" aria-hidden="true" />
             </button>
-            <p v-if="formSent" class="form-confirmation">
-              Your email client has been opened with the inquiry details.
-            </p>
+            <p v-if="formSent" class="form-confirmation">{{ copy.contact.form.sent }}</p>
           </form>
         </div>
       </section>
@@ -904,10 +927,7 @@ onUnmounted(() => {
       <div class="section-shell footer__inner">
         <div>
           <img class="footer__logo" :src="images.logoWide" :alt="brandName" />
-          <p>
-            Indonesian kratom sourcing for legal receiving markets, with batch documentation,
-            export packing and buyer-side compliance review.
-          </p>
+          <p>{{ copy.footer.description }}</p>
         </div>
 
         <div class="footer__links">
@@ -917,8 +937,8 @@ onUnmounted(() => {
         </div>
 
         <div>
-          <strong>Follow</strong>
-          <div class="social-row social-row--footer" aria-label="Social channels">
+          <strong>{{ copy.footer.follow }}</strong>
+          <div class="social-row social-row--footer" :aria-label="copy.hero.socialAria">
             <a
               v-for="social in socialLinks"
               :key="social.name"
@@ -938,8 +958,8 @@ onUnmounted(() => {
         </div>
       </div>
       <div class="section-shell footer__bottom">
-        <span>© 2026 ART Botanical IND. All rights reserved.</span>
-        <span>For lawful importers and verified buyers only.</span>
+        <span>{{ copy.footer.rights }}</span>
+        <span>{{ copy.footer.legal }}</span>
       </div>
     </footer>
   </div>
@@ -977,6 +997,18 @@ onUnmounted(() => {
 :global(a) {
   color: inherit;
   text-decoration: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 .site {
@@ -1143,21 +1175,28 @@ p {
   background: rgba(255, 255, 255, 0.18);
 }
 
+.hero-stage {
+  position: relative;
+  overflow: hidden;
+  background: #102017;
+}
+
 .hero {
   position: relative;
+  z-index: 2;
   display: flex;
   min-height: 82svh;
   flex-direction: column;
   justify-content: center;
-  overflow: hidden;
   padding: 112px 0 28px;
-  background: #102017;
+  background: transparent;
   color: #ffffff;
 }
 
 .hero__image,
 .hero__shade {
   position: absolute;
+  z-index: 0;
   inset: 0;
 }
 
@@ -1172,7 +1211,7 @@ p {
 .hero__shade {
   background:
     linear-gradient(90deg, rgba(12, 24, 17, 0.94) 0%, rgba(12, 24, 17, 0.76) 44%, rgba(12, 24, 17, 0.2) 100%),
-    linear-gradient(0deg, rgba(12, 24, 17, 0.5) 0%, rgba(12, 24, 17, 0.05) 42%);
+    linear-gradient(0deg, rgba(7, 20, 13, 0.78) 0%, rgba(12, 24, 17, 0.42) 30%, rgba(12, 24, 17, 0.05) 58%);
 }
 
 .nav {
@@ -1267,6 +1306,44 @@ p {
   gap: 8px;
 }
 
+.language-selector {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #ced9c9;
+  border-radius: 8px;
+  padding: 0 7px 0 9px;
+  background: #f7f9f3;
+  color: #26352a;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.language-selector:hover,
+.language-selector:focus-within {
+  border-color: var(--brand-olive);
+  background: #ffffff;
+}
+
+.language-selector svg {
+  flex: 0 0 auto;
+  color: var(--brand-olive);
+}
+
+.language-selector select {
+  width: 46px;
+  min-height: 40px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #26352a;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
 .nav__cta,
 .nav__toggle {
   display: inline-flex;
@@ -1317,10 +1394,10 @@ p {
 
 .proof-section {
   position: relative;
-  z-index: 3;
+  z-index: 2;
   margin-top: -1px;
   padding: 0 0 30px;
-  background: #102017;
+  background: transparent;
 }
 
 .hero__proof {
@@ -2619,10 +2696,8 @@ textarea:focus {
   }
 
   .nav__toggle {
-    position: fixed;
-    z-index: 31;
-    top: 20px;
-    right: 20px;
+    position: static;
+    z-index: auto;
   }
 
   .nav__cta {
